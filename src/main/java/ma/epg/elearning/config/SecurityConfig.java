@@ -14,13 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-// config/AppConfig.java
-
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
-
 
 @Configuration
 @EnableWebSecurity
@@ -36,46 +30,40 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(auth -> auth
-                        // CORRECTION 1 : Autoriser les FORWARD pour que les JSP puissent s'afficher sans boucle infinie
-                        .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/WEB-INF/views/**").permitAll()
-                        .requestMatchers("/login", "/logout", "/error").permitAll()
-                        // Autoriser ADMIN ou ROLE_ADMIN
-                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "ROLE_ADMIN")
-                        .requestMatchers("/enseignant/**").hasAnyAuthority("ENSEIGNANT", "ROLE_ENSEIGNANT", "PROF", "ROLE_PROF")
-                        .requestMatchers("/etudiant/**").hasAnyAuthority("ETUDIANT", "ROLE_ETUDIANT")
-                        .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .permitAll()
-                        .successHandler((request, response, authentication) -> {
-                            String role = authentication.getAuthorities()
-                                    .iterator().next().getAuthority();
-
-                            // CORRECTION 2 : Utiliser contains() pour éviter l'erreur 500 causée par un mauvais routage
-                            if (role.contains("ADMIN")) {
-                                response.sendRedirect("/admin/dashboard");
-                            } else if (role.contains("ENSEIGNANT") || role.contains("PROF")) {
-                                response.sendRedirect("/enseignant/dashboard");
-                            } else {
-                                response.sendRedirect("/etudiant/dashboard");
-                            }
-                        })
-                        .failureUrl("/login?error=true")
-                )
-                .logout(logout -> logout
-                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                        .logoutSuccessUrl("/login?logout=true")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                        .permitAll()
-                )
-                .sessionManagement(session -> session
-                        .maximumSessions(1)
-                );
+            .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/WEB-INF/views/**").permitAll()
+                .requestMatchers("/login", "/logout", "/error").permitAll()
+                .requestMatchers("/auth/inscription", "/auth/activer").permitAll()
+                .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "ROLE_ADMIN")
+                .requestMatchers("/enseignant/**").hasAnyAuthority("ENSEIGNANT", "ROLE_ENSEIGNANT", "PROF", "ROLE_PROF")
+                .requestMatchers("/etudiant/**").hasAnyAuthority("ETUDIANT", "ROLE_ETUDIANT")
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .permitAll()
+                .successHandler((request, response, authentication) -> {
+                    String role = authentication.getAuthorities().iterator().next().getAuthority();
+                    if (role.contains("ADMIN")) {
+                        response.sendRedirect("/admin/dashboard");
+                    } else if (role.contains("ENSEIGNANT") || role.contains("PROF")) {
+                        response.sendRedirect("/enseignant/dashboard");
+                    } else {
+                        response.sendRedirect("/etudiant/dashboard");
+                    }
+                })
+                .failureUrl("/login?error=true")
+            )
+            .logout(logout -> logout
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/login?logout=true")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
+            )
+            .sessionManagement(session -> session.maximumSessions(1));
 
         return http.build();
     }
@@ -86,11 +74,10 @@ public class SecurityConfig {
         builder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
         return builder.build();
     }
+
     @Configuration
     public class AppConfig {
         @Bean
-        public RestTemplate restTemplate() {
-            return new RestTemplate();
-        }
+        public RestTemplate restTemplate() { return new RestTemplate(); }
     }
 }

@@ -9,6 +9,8 @@
   <p class="text-muted mt-1">Ecole Polytechnique des Genies - Fes</p></div>
   <c:if test="${param.error}"><div class="alert alert-danger">Email ou mot de passe incorrect.</div></c:if>
   <c:if test="${param.logout}"><div class="alert alert-success">Deconnexion reussie.</div></c:if>
+  <%-- NOUVEAU --%>
+  <c:if test="${param.compteActive != null}"><div class="alert alert-success">Compte active ! Vous pouvez vous connecter.</div></c:if>
   <form method="post" action="/login">
     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
     <div class="mb-3"><label class="form-label fw-semibold">Email</label>
@@ -17,4 +19,10 @@
     <input type="password" name="password" class="form-control form-control-lg" placeholder="..." required></div>
     <button type="submit" class="btn btn-primary w-100 btn-lg">Se connecter</button>
   </form>
+  <%-- NOUVEAU --%>
+  <hr class="my-3">
+  <div class="text-center">
+    <span class="text-muted small">Etudiant sans compte ?</span><br>
+    <a href="/auth/inscription" class="btn btn-outline-secondary w-100 mt-2">Creer mon compte etudiant</a>
+  </div>
 </div></body></html>
